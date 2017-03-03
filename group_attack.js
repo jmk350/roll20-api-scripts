@@ -1,6 +1,6 @@
 on("chat:message", function(msg) {
     if(msg.type == "api" && msg.content.toLowerCase().indexOf('!attack') !== -1) {
-        var slice = msg.content.split(" "); 
+        var slice = msg.content.split(":"); 
         
         // definining the enemy stats based on the first person named after the !attack
         var enemynumber = slice[1];
@@ -19,13 +19,14 @@ on("chat:message", function(msg) {
             sendChat(msg.who, "target " + enemyname + " not found.");
         }
 
-        var ac = getAttrByName(targetplayercharacter[0].id, 'AC');
-        log(JSON.stringify(ac));
-        ac=18;
+        var targetplayertoken = findObjs({_type: "graphic", name: playername});
+        var ac = targetplayertoken[0].get("bar2_value");
 
-        var attackmod = parseInt(slice[4]);
-        var damageroll = slice[5];
-        var attacktype = slice[6];
+        var attacktype = slice[4];
+
+        var attackslot = slice[5];
+        var attackslotnum = slice[5].substr(slice[5].length - 1);
+        var attackmod = 0; getAttrByName(targetplayercharacter[0].id, 'meleetohit' + attackslotnum);
 
         // Start Attack
         if(enemynumber === '1')
@@ -33,7 +34,16 @@ on("chat:message", function(msg) {
         else
             sendChat(enemynumber + " " + enemyname + "s", "/em attack " + playername);
 
-        var output = "&{template:5eDefault} {{weapon=1}} {{title=@{" + enemyname + "|npc_action_name1}}}";
+        var output = "&{template:5eDefault} {{weapon=1}} ";
+        var weaponname, damageroll;
+        
+        if (attackslot.indexOf('melee') !== -1) {
+            damageroll = "[[@{" + enemyname + "|meleedmg" + attackslotnum + "}+@{" + enemyname + "|meleedmgbonus" + attackslotnum + "}+@{" + enemyname + "|global_melee_damage_bonus}]] @{" + enemyname + "|meleedmgtype" + attackslotnum + "}";
+            output += "{{title=@{" + enemyname + "|meleeweaponname" + attackslotnum + "}}} {{subheader=" + enemyname + "}} {{subheaderright=Melee attack}}";
+        } else {
+            damageroll = "[[@{" + enemyname + "|rangeddmg" + attackslotnum + "}+@{" + enemyname + "|rangeddmgbonus" + attackslotnum + "}+@{" + enemyname + "|global_ranged_damage_bonus}]] @{" + enemyname + "|rangeddmgtype" + attackslotnum + "}";
+            output += "{{title=@{" + enemyname + "|rangedweaponname" + attackslotnum + "}}} {{subheader=" + enemyname + "}} {{subheaderright=Range attack}}";
+        }
 
         for (i = 0; i < enemynumber; i++) {
             var attackroll = randomInteger(20);
@@ -41,19 +51,19 @@ on("chat:message", function(msg) {
 
             if(attacktype == "Standard") {
                 if(attack >= ac)
-                    output += " {{" + enemyname + " " + (i+1) + "=[[" + attackroll + "+" + attackmod + "]]<p/>Hit for [[" + damageroll + "]] damage}}";
+                    output += " {{Attack " + (i+1) + "=[[" + attackroll + "+" + attackmod + "]]<p/>Hit for " + damageroll + "}}";
                 else
-                    output += " {{" + enemyname + " " + (i+1) + "=[[" + attackroll + "+" + attackmod + "]]  Miss!}}";
+                    output += " {{Attack " + (i+1) + "=[[" + attackroll + "+" + attackmod + "]]  Miss!}}";
             } else {
                 var attackroll2 = randomInteger(20);
                 var attack2 = attackroll2 + attackmod;
 
                 if(attacktype == "Advantage" && (attack >= ac || attack2 >= ac))
-                    output += " {{" + enemyname + " " + (i+1) + "=[[" + attackroll + "+" + attackmod + "]] | [[" + attackroll2 + "+" + attackmod + "]]<p/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hit for [[" + damageroll + "]] damage}}";
+                    output += " {{Attack " + (i+1) + "=[[" + attackroll + "+" + attackmod + "]] | [[" + attackroll2 + "+" + attackmod + "]]<p/>Hit for " + damageroll + "<p/>}}";
                 else if(attacktype == "Disdvantage" && attack >= ac && attack2 >= ac)
-                    output += " {{" + enemyname + " " + (i+1) + "=[[" + attackroll + "+" + attackmod + "]] | [[" + attackroll2 + "+" + attackmod + "]]<p/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hit for [[" + damageroll + "]] damage}}";
+                    output += " {{Attack " + (i+1) + "=[[" + attackroll + "+" + attackmod + "]] | [[" + attackroll2 + "+" + attackmod + "]]<p/>Hit for " + damageroll + "<p/>}}";
                 else
-                    output += " {{" + enemyname + " " + (i+1) + "=[[" + attackroll + "+" + attackmod + "]] | [[" + attackroll2 + "+" + attackmod + "]] Miss!}}";
+                    output += " {{Attack " + (i+1) + "=[[" + attackroll + "+" + attackmod + "]] | [[" + attackroll2 + "+" + attackmod + "]] Miss!}}";
             }
         }
             
