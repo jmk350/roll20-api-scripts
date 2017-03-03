@@ -26,7 +26,7 @@ on("chat:message", function(msg) {
 
         var attackslot = slice[5];
         var attackslotnum = slice[5].substr(slice[5].length - 1);
-        var attackmod = 0; getAttrByName(targetplayercharacter[0].id, 'meleetohit' + attackslotnum);
+        var attackmod = parseInt(slice[6]);
 
         // Start Attack
         if(enemynumber === '1')
